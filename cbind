@@ -1,0 +1,15 @@
+def cbind(df, list_to_append, new_col_name = None):
+  """ Append a column to an existing spark dataframe in the order inputted to the function
+  @param df: a spark dataframe to append to 
+  @param list_to_append a list of data (same length as df) to append to the dataframe
+  @param new_col_name: a string containing the name for new column
+  @author: Casey Jayne
+  """
+  if not new_col_name:
+    new_col_name = 'appended_col'
+    
+  new = spark.createDataFrame([(l,) for l in list_to_append], [new_col_name])
+  df = df.withColumn('row_idx', row_number().over(Window.orderBy(monotonically_increasing_id())))
+  new = new.withColumn('row_idx', row_number().over(Window.orderBy(monotonically_increasing_id())))
+  df = df.join(new, df.row_idx == new.row_idx).drop('row_idx')
+  return df
